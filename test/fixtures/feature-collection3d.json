@@ -1,0 +1,18 @@
+{
+    "type": "FeatureCollection",
+    "features": [{
+        "type": "Feature",
+        "properties": null,
+        "geometry": {"type": "Point", "coordinates": [100.0, 0.0, 20.5]}
+    }, {
+        "type": "Feature",
+        "properties": {
+            "notice": "coordinates with a 2d point and a 3d point, it's not good to have this kind of data, just a test"
+        },
+        "geometry": {"type": "LineString", "coordinates": [[101.0, 0.0], [102.0, 1.0, 5.0]]}
+    }, {
+        "type": "Feature",
+        "properties": null,
+        "geometry": {"type": "LineString", "coordinates": [[101.0, 0.0, 4.0], [102.0, 1.0, 5.0]]}
+    }]
+}

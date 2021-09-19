@@ -59,6 +59,22 @@ static void testPoint(bool use_convert) {
     const auto &p = geom.get<point>();
     assert(p.x == 30.5);
     assert(p.y == 50.5);
+    assert(p.z == 0.0);
+
+    assert(parse(writeGeoJSON(data, use_convert)) == data);
+}
+
+static void testPoint3d(bool use_convert) {
+    const auto data = readGeoJSON("test/fixtures/point3d.json", use_convert);
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<point>());
+
+    const auto &p = geom.get<point>();
+    assert(p.x == 30.5);
+    assert(p.y == 50.5);
+    assert(p.z == 70.5);
 
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
@@ -72,6 +88,21 @@ static void testMultiPoint(bool use_convert) {
 
     const auto &points = geom.get<multi_point>();
     assert(points.size() == 2);
+
+    assert(parse(writeGeoJSON(data, use_convert)) == data);
+}
+
+static void testMultiPoint3d(bool use_convert) {
+    const auto data = readGeoJSON("test/fixtures/multi-point3d.json", use_convert);
+    assert(data.is<geometry>());
+
+    const auto &geom = data.get<geometry>();
+    assert(geom.is<multi_point>());
+
+    const auto &points = geom.get<multi_point>();
+    assert(points.size() == 2);
+    assert(points[0].z == 6.5);
+    assert(points[1].z == 7.0);
 
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
@@ -228,6 +259,16 @@ static void testFeatureCollection(bool use_convert) {
     assert(parse(writeGeoJSON(data, use_convert)) == data);
 }
 
+static void testFeatureCollection3d(bool use_convert) {
+    const auto data = readGeoJSON("test/fixtures/feature-collection3d.json", use_convert);
+    assert(data.is<feature_collection>());
+
+    const auto &features = data.get<feature_collection>();
+    assert(features.size() == 3);
+
+    assert(parse(writeGeoJSON(data, use_convert)) == data);
+}
+
 static void testFeatureID(bool use_convert) {
     const auto data = readGeoJSON("test/fixtures/feature-id.json", use_convert);
     assert(data.is<feature_collection>());
@@ -235,6 +276,7 @@ static void testFeatureID(bool use_convert) {
     const auto &features = data.get<feature_collection>();
 
     assert(features.at(0).id == identifier { uint64_t(1234) });
+    assert(features.at(1).id == identifier { std::string("abcd") });
     assert(features.at(1).id == identifier { "abcd" });
 
     assert(parse(writeGeoJSON(data, use_convert)) == data);
@@ -251,7 +293,9 @@ static void testParseErrorHandling() {
 
 void testAll(bool use_convert) {
     testPoint(use_convert);
+    testPoint3d(use_convert);
     testMultiPoint(use_convert);
+    testMultiPoint3d(use_convert);
     testLineString(use_convert);
     testMultiLineString(use_convert);
     testPolygon(use_convert);
@@ -262,6 +306,7 @@ void testAll(bool use_convert) {
     testFeatureNullGeometry(use_convert);
     testFeatureMissingProperties(use_convert);
     testFeatureCollection(use_convert);
+    testFeatureCollection3d(use_convert);
     testFeatureID(use_convert);
 }
 

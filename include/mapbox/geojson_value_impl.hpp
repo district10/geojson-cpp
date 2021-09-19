@@ -32,11 +32,13 @@ point convert<point>(const value &val) {
     }
 
     const auto &valuePoint = *val.getArray();
-    if (valuePoint.size() < 2) {
-        throw error("coordinates array must have at least 2 numbers");
+    if (valuePoint.size() == 3) {
+        return point{ getDouble(valuePoint[0]), getDouble(valuePoint[1]),
+                      getDouble(valuePoint[2]) };
+    } else if (valuePoint.size() == 2) {
+        return point{ getDouble(valuePoint[0]), getDouble(valuePoint[1]) };
     }
-
-    return point{ getDouble(valuePoint[0]), getDouble(valuePoint[1]) };
+    throw error("coordinates array must have at least 2 numbers");
 }
 
 template <typename Container>
@@ -222,7 +224,7 @@ geojson convert(const value &val) {
 }
 
 value convert(const point &p) {
-    return value::array_type{ p.x, p.y };
+    return value::array_type{ p.x, p.y, p.z };
 }
 
 template <typename Cont>

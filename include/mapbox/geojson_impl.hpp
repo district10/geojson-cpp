@@ -21,10 +21,12 @@ T convert(const rapidjson_value &json);
 
 template <>
 point convert<point>(const rapidjson_value &json) {
-    if (json.Size() < 2)
-        throw error("coordinates array must have at least 2 numbers");
-
-    return point{ json[0].GetDouble(), json[1].GetDouble() };
+    if (json.Size() == 3) {
+        return point{ json[0].GetDouble(), json[1].GetDouble(), json[2].GetDouble() };
+    } else if (json.Size() == 2) {
+        return point{ json[0].GetDouble(), json[1].GetDouble() };
+    }
+    throw error("coordinates array must have at least 2 numbers");
 }
 
 template <typename Cont>
@@ -317,6 +319,9 @@ struct to_coordinates_or_geometries {
         result.SetArray();
         result.PushBack(element.x, allocator);
         result.PushBack(element.y, allocator);
+        if (element.z != 0) {
+            result.PushBack(element.z, allocator);
+        }
         return result;
     }
 
