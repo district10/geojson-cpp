@@ -74,6 +74,17 @@ geometry convert<geometry>(const value &val) {
         throw error("Geometry 'type' property must be of a String type");
     }
 
+#if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
+    mapbox::feature::property_map custom_properties;
+    for (const auto &pair: *valueObject) {
+        auto &key = pair.first;
+        if (key == "type" || key == "coordinates" || key == "geometries") {
+            continue;
+        }
+        custom_properties.emplace(key, pair.second);
+    }
+#endif
+
     const auto &typeString = *typeValue.getString();
 
     if (typeString == "GeometryCollection") {
@@ -87,7 +98,13 @@ geometry convert<geometry>(const value &val) {
             throw error("GeometryCollection geometries property must be an array");
         }
 
+#if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
+        auto ret = geometry{ convert<geometry_collection>(*geometryArray) };
+        ret.custom_properties = std::move(custom_properties);
+        return ret;
+#else
         return geometry{ convert<geometry_collection>(*geometryArray) };
+#endif
     }
 
     auto coordinatesIt = valueObject->find("coordinates");
@@ -100,6 +117,25 @@ geometry convert<geometry>(const value &val) {
         throw error("coordinates property must be an array");
     }
 
+#if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
+    geometry ret;
+    if (typeString == "Point")
+        ret = geometry{ convert<point>(*coordinateArray) };
+    else if (typeString == "MultiPoint")
+        ret = geometry{ convert<multi_point>(*coordinateArray) };
+    else if (typeString == "LineString")
+        ret = geometry{ convert<line_string>(*coordinateArray) };
+    else if (typeString == "MultiLineString")
+        ret = geometry{ convert<multi_line_string>(*coordinateArray) };
+    else if (typeString == "Polygon")
+        ret = geometry{ convert<polygon>(*coordinateArray) };
+    else if (typeString == "MultiPolygon")
+        ret = geometry{ convert<multi_polygon>(*coordinateArray) };
+    else
+        throw error(typeString + " not yet implemented");
+    ret.custom_properties = std::move(custom_properties);
+    return ret;
+#else
     if (typeString == "Point")
         return geometry{ convert<point>(*coordinateArray) };
     if (typeString == "MultiPoint")
@@ -114,6 +150,7 @@ geometry convert<geometry>(const value &val) {
         return geometry{ convert<multi_polygon>(*coordinateArray) };
 
     throw error(typeString + " not yet implemented");
+#endif
 }
 
 template <>
@@ -164,6 +201,17 @@ feature convert<feature>(const value &val) {
         result.properties = *propertiesIt->second.getObject();
     }
 
+#if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
+    auto &custom_properties = result.custom_properties;
+    for (const auto &pair: *valueObject) {
+        auto &key = pair.first;
+        if (key == "type" || key == "geometry" || key == "properties" || key == "id") {
+            continue;
+        }
+        custom_properties.emplace(key, pair.second);
+    }
+#endif
+
     return result;
 }
 
@@ -201,6 +249,17 @@ geojson convert<geojson>(const value &val) {
         for (const auto &featureValue : *featureArray) {
             collection.push_back(convert<feature>(featureValue));
         }
+
+#if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
+        auto &custom_properties = collection.custom_properties;
+        for (const auto &pair: *valueObject) {
+            auto &key = pair.first;
+            if (key == "type" || key == "features") {
+                continue;
+            }
+            custom_properties.emplace(key, pair.second);
+        }
+#endif
         return geojson{ collection };
     }
 
