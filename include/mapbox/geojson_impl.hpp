@@ -275,7 +275,7 @@ geojson convert<geojson>(const rapidjson_value &json) {
             if (key == "type" || key == "features") {
                 continue;
             }
-            collection.custom_properties.emplace(key, convert<value>(m.value));
+            collection.custom_properties.emplace(std::move(key), convert<value>(m.value));
         }
 #endif
         return geojson{ collection };
@@ -445,10 +445,11 @@ struct to_value {
         result.SetObject();
         for (const auto& property : map) {
             result.AddMember(
-                rapidjson::GenericStringRef<char> {
+                rapidjson_value(
                     property.first.data(),
-                    rapidjson::SizeType(property.first.size())
-                },
+                    rapidjson::SizeType(property.first.size()),
+                    allocator
+                ),
                 value::visit(property.second, *this),
                 allocator);
         }
@@ -476,9 +477,12 @@ rapidjson_value convert<geometry>(const geometry& element, rapidjson_allocator& 
 #if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
     auto visitor = to_value{ allocator };
     for (auto &pair : element.custom_properties) {
+        auto &key = pair.first;
+        if (key == "type" || key == "coordinates" || key == "geometries") {
+            continue;
+        }
         result.AddMember(
-            rapidjson::GenericStringRef<char>{ pair.first.data(),
-                                               rapidjson::SizeType(pair.first.size()) },
+            rapidjson_value(key.data(), rapidjson::SizeType(key.size()), allocator),
             value::visit(pair.second, visitor), //
             allocator);
     }
@@ -502,9 +506,12 @@ rapidjson_value convert<feature>(const feature& element, rapidjson_allocator& al
 #if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
     auto visitor = to_value{ allocator };
     for (auto &pair : element.custom_properties) {
+        auto &key = pair.first;
+        if (key == "type" || key == "geometry" || key == "properties" || key == "id") {
+            continue;
+        }
         result.AddMember(
-            rapidjson::GenericStringRef<char>{ pair.first.data(),
-                                               rapidjson::SizeType(pair.first.size()) },
+            rapidjson_value(key.data(), rapidjson::SizeType(key.size()), allocator),
             value::visit(pair.second, visitor), allocator);
     }
 #endif
@@ -526,9 +533,12 @@ rapidjson_value convert<feature_collection>(const feature_collection& collection
 #if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
     auto visitor = to_value{ allocator };
     for (auto &pair : collection.custom_properties) {
+        auto &key = pair.first;
+        if (key == "type" || key == "features") {
+            continue;
+        }
         result.AddMember(
-            rapidjson::GenericStringRef<char>{ pair.first.data(),
-                                               rapidjson::SizeType(pair.first.size()) },
+            rapidjson_value(key.data(), rapidjson::SizeType(key.size()), allocator),
             value::visit(pair.second, visitor), allocator);
     }
 #endif
